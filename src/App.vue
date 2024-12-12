@@ -46,6 +46,10 @@ const currentScene = (scene: Game) => {
     canMoveSprite.value = (scene.scene.key !== "MainMenu");
 }
 
+const handleClick = () => {
+    console.log("hello")
+}
+
 
 </script>
 
@@ -53,5 +57,6 @@ const currentScene = (scene: Game) => {
     <PhaserGame ref="phaserRef" @current-active-scene="currentScene" />
     <div>
        <input v-model="text" placeholder="Enter a message"/>
+       <button @click="handleClick"> Click Me </button>
     </div>
 </template>

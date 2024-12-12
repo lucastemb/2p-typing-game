@@ -25,9 +25,8 @@ onMounted(() => {
     }
 
     EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) => {
-        EventBus.emit('words-list', words_list.value);
         EventBus.emit('current-active-scene', scene_instance);
-    
+        EventBus.emit('words-list', words_list.value);
         scene.value = scene_instance;
     
     });
@@ -49,5 +48,7 @@ defineExpose({ scene, game });
 </script>
 
 <template>
+    <div className="flex flex-col"> 
     <div id="game-container"></div>
+    </div> 
 </template>
