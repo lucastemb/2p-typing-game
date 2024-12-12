@@ -20,27 +20,16 @@ export class Game extends Scene
 
 
         this.gameText = this.add.text(512, 384, 'This is just a test', {
-            fontFamily: 'Arial Black', fontSize: 24, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
+            fontFamily: 'Arial Black', fontSize: 18, color: '#ffffff',
+            stroke: '#000000', strokeThickness: 4,
             align: 'center'
         }).setOrigin(0.5).setDepth(100);
         
-
-        EventBus.emit('current-scene-ready', this);
         EventBus.on('words-list', (data: string[]) => {
-            console.log(data);
+            this.gameText.setText(data[0]);
         });
+        EventBus.emit('current-scene-ready', this);
         
-    }
-
-   
-    handleWordsList(wordList: string[]) {
-        console.log('Received word list:', wordList); 
-    }
-
-    updateMessage(wordList: string){
-        if(this.gameText){
-            this.gameText.setText(wordList);
-        }
+        
     }
 }

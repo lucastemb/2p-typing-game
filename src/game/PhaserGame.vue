@@ -25,9 +25,8 @@ onMounted(() => {
     }
 
     EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) => {
-        console.log(words_list.value)
-        emit('current-active-scene', scene_instance);
         EventBus.emit('words-list', words_list.value);
+        EventBus.emit('current-active-scene', scene_instance);
     
         scene.value = scene_instance;
     
