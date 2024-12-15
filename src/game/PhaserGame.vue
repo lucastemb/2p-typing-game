@@ -11,7 +11,7 @@ const WORDS = ref<string[]>(textFile.split('\r\n'))
 const words_list = ref<string[]>([]);
 const text = ref('')
 
-const emit = defineEmits(['current-active-scene', 'words_list', 'word_change']);
+const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete']);
 
 const appendRandomWord = () => {
     const randomInt = Math.floor(Math.random() * WORDS.value.length)
@@ -46,6 +46,7 @@ watch(text, async(newText, oldText)=> {
         text.value = "";
         words_list.value.splice(index, 1);
         appendRandomWord();
+        EventBus.emit('word-complete', index);
         EventBus.emit('words-list', words_list.value);
     }
 })

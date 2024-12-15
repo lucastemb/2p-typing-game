@@ -39,10 +39,27 @@ export class Game extends Scene
 
         EventBus.emit('current-scene-ready', this);
         
+        this.newWordTimeGoal = Math.floor(Math.random() * 250 + 10)
         
     }
 
     update(){
-        console.log("hello")
+
+
+        EventBus.on('word-complete', (data: number) => {
+            console.log(data)
+            this.texts[data].setPosition(-100,-100);
+        });
+
+        if(this.newWordTimeGoal !== this.runningTimer){
+            this.runningTimer++;
+        }
+        else{
+            const randomIndex: number = Math.floor(Math.random() * 10)
+            this.texts[randomIndex].setPosition(500, 500);
+            this.newWordTimeGoal = Math.floor(Math.random() * 250 + 50)
+            this.runningTimer = 0; 
+        }
+        
     }
 }
