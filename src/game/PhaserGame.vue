@@ -8,21 +8,15 @@ import textFile from '../words_alpha.txt?raw';
 const scene = ref();
 const game = ref();
 const WORDS = ref<string[]>(textFile.split('\r\n'))
-const words_list = ref<string[]>([]);
+// const words_list = ref<string[]>([]);
 const text = ref('')
-const last_removed = ref(-1);
+const words_final = ref<Set<string>>(new Set<string>());
 
 const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete']);
 
 const appendRandomWord = () => {
     const randomInt = Math.floor(Math.random() * WORDS.value.length)
-    if(last_removed.value === -1){ //if there is no last removed
-        words_list.value.push(WORDS.value[randomInt] || ''); 
-        console.log(words_list.value)
-    }
-    else { //replace most recent one
-        words_list.value.splice(last_removed.value, 0, WORDS.value[randomInt] || ''); 
-    }
+    words_final.value.add(WORDS.value[randomInt])
 }
 
 
@@ -31,24 +25,24 @@ onMounted(() => {
     EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) => {
         EventBus.emit('current-active-scene', scene_instance);
         scene.value = scene_instance;
-        EventBus.emit('words-list', words_list.value);
+        EventBus.emit('words-list', words_final.value);
     });
 
     EventBus.on('add-new-word', ()=> {
         appendRandomWord();
-        EventBus.emit('words-list', words_list.value);
+        EventBus.emit('words-list', words_final.value);
     })
-
+    EventBus.on('word-offscreen', (word: string)=> {
+        words_final.value.delete(word)
+        EventBus.emit('words-list', words_final.value);
+    })
 });
 
 watch(text, async(newText, oldText)=> { //when word is typed out
-    const index: number = words_list.value.indexOf(newText, 0)
-    if(index !== -1){
+    if(words_final.value.has(newText)){
         text.value = "";
-        words_list.value.splice(index, 1);
-        last_removed.value = index;
-        appendRandomWord();
-        EventBus.emit('word-complete', index);
+        words_final.value.delete(newText);
+        EventBus.emit('word-complete', newText);
     }
 })
 
