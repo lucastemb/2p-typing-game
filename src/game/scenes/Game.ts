@@ -50,7 +50,7 @@ export class Game extends Scene
     update(){
 
         EventBus.on('word-complete', (data: string) => { //change to pass in word
-            this.falling_words.get(data)?.setPosition(-100,-100);
+            this.falling_words.get(data)?.destroy();
             this.falling_words.delete(data)
         });
 
@@ -68,7 +68,7 @@ export class Game extends Scene
             const fall_rate = Math.random() * 1.5 + 0.025
             value.setPosition(value.x, value.y+fall_rate)
             if(value.y > 720){
-                value.setPosition(-100,-100);
+                value.destroy();
                 this.falling_words.delete(value.text);
                 EventBus.emit('word-offscreen', value.text);
             }
