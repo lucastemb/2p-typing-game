@@ -1,7 +1,5 @@
 package ws
 
-import "log"
-
 type Room struct {
 	ID      string             `json:"id"`
 	Name    string             `json:"name"`
@@ -32,20 +30,33 @@ func (h *Hub) Run() {
 			if _, ok := h.Rooms[cl.RoomID]; ok {
 				r := h.Rooms[cl.RoomID]
 				if _, ok := r.Clients[cl.ID]; !ok && len(r.Clients) < 2 {
-					log.Printf("here")
 					r.Clients[cl.ID] = cl
 				}
 
 			}
 		case cl := <-h.Unregister:
-			log.Printf("this happened")
 			if _, ok := h.Rooms[cl.RoomID]; ok {
 				if _, ok := h.Rooms[cl.RoomID].Clients[cl.ID]; ok {
+					m := &Message{
+						Content:  nil,
+						RoomID:   cl.RoomID,
+						Username: cl.Username,
+						Alert:    "User has left the room",
+					}
+
+					h.Broadcast <- m
 					delete(h.Rooms[cl.RoomID].Clients, cl.ID)
 					close(cl.Message)
 				}
 			}
+		case m := <-h.Broadcast:
+			if _, ok := h.Rooms[m.RoomID]; ok {
+				for _, cl := range h.Rooms[m.RoomID].Clients {
+					cl.Message <- m
+				}
+			}
 
 		}
+
 	}
 }
