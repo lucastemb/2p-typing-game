@@ -63,7 +63,19 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 		Username: username,
 	}
 
+	m := &Message{
+		Content: &GameState{
+			Lives:  3,
+			Scene:  1,
+			Streak: 0,
+		},
+		RoomID:   roomID,
+		Username: username,
+		Alert:    "User just joined the room",
+	}
+
 	h.hub.Register <- cl
+	h.hub.Broadcast <- m
 
 	go cl.writeMessage()
 	cl.readMessage(h.hub)

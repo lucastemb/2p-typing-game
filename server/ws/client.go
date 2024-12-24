@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
 )
@@ -13,8 +14,9 @@ type GameState struct {
 
 type Message struct {
 	Content  *GameState
-	RoomID   int    `json:"roomId"`
+	RoomID   string `json:"roomId"`
 	Username string `json:"username"`
+	Alert    string `json:"alert"`
 }
 
 type Client struct {
@@ -46,7 +48,7 @@ func (c *Client) readMessage(hub *Hub) {
 	}()
 
 	for {
-		_, _, err := c.Conn.ReadMessage()
+		_, m, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
@@ -54,12 +56,19 @@ func (c *Client) readMessage(hub *Hub) {
 			break
 		}
 
-		// msg := &Message{
-		// 	Content:  string(m),
-		// 	RoomID:   c.RoomID,
-		// 	Username: c.Username,
-		// }
+		var payload GameState
 
-		// hub.Broadcast <- msg
+		if err := json.Unmarshal(m, &payload); err != nil {
+			log.Printf("failed to parse message: %v", err)
+			continue
+		}
+		msg := &Message{
+			Content:  &payload,
+			RoomID:   c.RoomID,
+			Username: c.Username,
+			Alert:    "New payload received",
+		}
+
+		hub.Broadcast <- msg
 	}
 }
