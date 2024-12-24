@@ -8,9 +8,9 @@ import textFile from '../words_alpha.txt?raw';
 const scene = ref();
 const game = ref();
 const WORDS = ref<string[]>(textFile.split('\r\n'))
-// const words_list = ref<string[]>([]);
 const text = ref('')
 const words_final = ref<Set<string>>(new Set<string>());
+const charsTyped = ref<number>(0);
 
 const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete']);
 
@@ -19,7 +19,6 @@ const appendRandomWord = () => {
     words_final.value.add(WORDS.value[randomInt])
 }
 
-
 onMounted(() => {
     game.value = StartGame('game-container');
     EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) => {
@@ -27,7 +26,6 @@ onMounted(() => {
         scene.value = scene_instance;
         EventBus.emit('words-list', words_final.value);
     });
-
     EventBus.on('add-new-word', ()=> {
         appendRandomWord();
         EventBus.emit('words-list', words_final.value);
@@ -39,10 +37,15 @@ onMounted(() => {
 });
 
 watch(text, async(newText, oldText)=> { //when word is typed out
+    if(newText.length === oldText.length+1){
+        charsTyped.value+=1;
+    }
     if(words_final.value.has(newText)){
+        const percentage: string = (newText.length/charsTyped.value).toFixed(2)
+        charsTyped.value = 0
         text.value = "";
         words_final.value.delete(newText);
-        EventBus.emit('word-complete', newText);
+        EventBus.emit('word-complete', newText, percentage);
     }
 })
 
