@@ -1,6 +1,7 @@
 
 import { Game as MainGame } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
+import { Win } from './scenes/Win';
 import { AUTO, Game } from 'phaser';
 
 //  Find out more information about the Game Config at:
@@ -13,7 +14,8 @@ const config: Phaser.Types.Core.GameConfig = {
     backgroundColor: '#028af8',
     scene: [
         MainGame,
-        GameOver
+        GameOver,
+        Win
     ]
 };
 

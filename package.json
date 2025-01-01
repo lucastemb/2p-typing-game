@@ -27,8 +27,12 @@
         "build-nolog": "vite build --config vite/config.prod.mjs"
     },
     "dependencies": {
+        "@types/randomstring": "^1.3.0",
         "phaser": "^3.87.0",
-        "vue": "^3.4.27"
+        "randomstring": "^1.3.0",
+        "ts-randomstring": "^1.0.8",
+        "vue": "^3.4.27",
+        "ws": "^8.18.0"
     },
     "devDependencies": {
         "@tsconfig/node20": "^20.1.2",

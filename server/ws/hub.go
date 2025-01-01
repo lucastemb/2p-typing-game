@@ -31,6 +31,13 @@ func (h *Hub) Run() {
 				r := h.Rooms[cl.RoomID]
 				if _, ok := r.Clients[cl.ID]; !ok && len(r.Clients) < 2 {
 					r.Clients[cl.ID] = cl
+					m := &Message{
+						Content:  nil,
+						RoomID:   cl.RoomID,
+						Username: cl.Username,
+						Alert:    "New user has joined the room",
+					}
+					h.Broadcast <- m
 				}
 
 			}

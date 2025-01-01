@@ -1,6 +1,13 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 
+type EnemyPayload = {
+    lives?: number;
+    scene?: number;
+    streak?: number;
+
+};
+
 export class Game extends Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
@@ -11,10 +18,12 @@ export class Game extends Scene
     score: number = 0;
     scoreboard: Phaser.GameObjects.Text; 
     scorestreak: number = 0;
-    lives: number = 3
+    lives: number = 3;
+    enemyLives: number | undefined = 3;
+
 
     //make text fall down and spawn from random location (done)
-    //delete game objects when they go off screen
+    //delete game objects when they go off screen (done)
     //replace new words with indexes they are supposed to go in (done)
 
     constructor ()
@@ -62,7 +71,6 @@ export class Game extends Scene
             else{
                 this.scorestreak = 0;
             }
-            console.log(this.scorestreak)
             this.falling_words.get(word)?.destroy();
             this.falling_words.delete(word)
             this.score+=word.length*100.5
@@ -88,11 +96,13 @@ export class Game extends Scene
             value.setPosition(value.x, value.y+fall_rate)
             if(value.y > 720){
                 this.lives -= 1;
-                console.log("lives:", this.lives)
                 value.destroy();
                 this.falling_words.delete(value.text);
                 EventBus.emit('word-offscreen', value.text);
             }
+        })
+        EventBus.on('enemy-update',(data: EnemyPayload)=>{
+            this.enemyLives = data.lives;
         })
         this.changeScene()
     }
@@ -100,6 +110,9 @@ export class Game extends Scene
     changeScene(){
         if(this.lives <= 0){
             this.scene.start('GameOver')
+        }
+        if(this.enemyLives <= 0){
+            this.scene.start('Win')
         }
     }
 }
