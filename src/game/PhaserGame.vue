@@ -31,7 +31,7 @@ const enemyPayload = ref<EnemyPayload | null>(null);
 const joined = ref<boolean>(false);
 const partyFull = ref<boolean>(false);
 
-const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete', 'enemy-update']);
+const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete', 'enemy-update', 'send-new-word']);
 
 
 const createLobby= () => {
@@ -117,7 +117,9 @@ const joinLobby = () => {
 }
 const appendRandomWord = () => {
     const randomInt = Math.floor(Math.random() * WORDS.value.length)
-    words_final.value.add(WORDS.value[randomInt])
+    const newWord = WORDS.value[randomInt]
+    EventBus.emit('send-new-word',newWord)
+    words_final.value.add(newWord)
 }
 watch(enemyPayload, async (newPayload)=> {
     if(newPayload?.lives !== 0){
@@ -218,8 +220,6 @@ defineExpose({ scene, game });
         <div className="flex flex-col">
         <div>
         <input className="text-black" v-model="text"> </input>
-        <p> {{partyFull}} </p>
-        <p> {{joined}} </p>
         </div>
         </div>
     </div>

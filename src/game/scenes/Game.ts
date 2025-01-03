@@ -1,5 +1,6 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
+import { Queue } from "queue-typescript";
 
 type EnemyPayload = {
     lives?: number;
@@ -15,6 +16,8 @@ export class Game extends Scene
     newWordTimeGoal: number = 0;
     runningTimer: number = 0; 
     falling_words: Map<string, Phaser.GameObjects.Text> = new Map<string, Phaser.GameObjects.Text>();
+    readyToFall: Map<string, boolean> = new Map<string, boolean>();
+    fallOrder: Queue<string> = new Queue<string>();
     score: number = 0;
     scoreboard: Phaser.GameObjects.Text; 
     scorestreak: number = 0;
@@ -22,10 +25,12 @@ export class Game extends Scene
     enemyLives: number | undefined = 3;
 
 
-    //make text fall down and spawn from random location (done)
-    //delete game objects when they go off screen (done)
-    //replace new words with indexes they are supposed to go in (done)
+    //one of the main issues is that the text will all fall down at the same time which makes it hard as the player to keep up with and they also all fall at the same time
+    //make it so the words fall in batches
 
+    //would it makes sense to use a queue? 
+
+    //three at a time will fall
     constructor ()
     {
         super('Game');
@@ -47,6 +52,13 @@ export class Game extends Scene
             align: 'center'
         }).setOrigin(0.5).setDepth(100)
 
+
+        //receive newly created word
+        EventBus.on('send-new-word', (word: string)=> {
+            this.fallOrder.enqueue(word)
+            console.log(this.fallOrder)
+        })
+
         EventBus.on('words-list', (data: Set<string>) => {
             for(const word of data.values()){
                 if(!this.falling_words.has(word)){
@@ -57,13 +69,13 @@ export class Game extends Scene
                     }).setOrigin(0.5).setDepth(100)
                     
                     textObject.setText(word);
-                    const x_val = Math.random() * 1000 + 100;
+                    const x_val = Math.random() * 870 + 100;
                     textObject.setPosition(x_val, -100);
                     this.falling_words.set(word, textObject)
+                    this.readyToFall.set(word, false)
                 }
             }
         });
-
         EventBus.on('word-complete', (word:string, percentage: string) => { //change to pass in word
             if (percentage === "1.00"){
                 this.scorestreak += 1;
@@ -73,6 +85,8 @@ export class Game extends Scene
             }
             this.falling_words.get(word)?.destroy();
             this.falling_words.delete(word)
+            //determines whether the word is ready to fall for bunching purposes
+            this.readyToFall.delete(word)
             this.score+=word.length*100.5
         });
         
@@ -87,17 +101,25 @@ export class Game extends Scene
         }
         else {
             EventBus.emit('add-new-word', true);
+            const maxIterate = Math.min(this.fallOrder.length, 3)
+            for(let i = 0; i < maxIterate; i++){
+                const temp_word = this.fallOrder.dequeue()
+                this.readyToFall.set(temp_word, true)
+            }
             this.newWordTimeGoal = Math.floor(Math.random() * 350 + 50)
             this.runningTimer = 0; 
         }
 
         this.falling_words.forEach((value, word)=> {
             const fall_rate = Math.random() * 1.5 + 0.025
-            value.setPosition(value.x, value.y+fall_rate)
+            if(this.readyToFall.get(word)){
+                value.setPosition(value.x, value.y+fall_rate)
+            }
             if(value.y > 720){
                 this.lives -= 1;
                 value.destroy();
                 this.falling_words.delete(value.text);
+                this.readyToFall.delete(value.text)
                 EventBus.emit('word-offscreen', value.text);
             }
         })
