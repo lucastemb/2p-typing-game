@@ -30,6 +30,7 @@ const streak = ref<number>(0);
 const enemyPayload = ref<EnemyPayload | null>(null);
 const joined = ref<boolean>(false);
 const partyFull = ref<boolean>(false);
+const clickedJoin = ref<boolean>(false);
 
 const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete', 'enemy-update', 'send-new-word']);
 
@@ -123,7 +124,7 @@ const appendRandomWord = () => {
 }
 watch(enemyPayload, async (newPayload)=> {
     if(newPayload?.lives !== 0){
-        for(let i = newPayload!.streak; i < newPayload.streak/0.65; i++){
+        for(let i = newPayload!.streak; i < newPayload.streak/2; i++){
             appendRandomWord();
         }
     }
@@ -200,26 +201,29 @@ defineExpose({ scene, game });
 
 <template>
     <div>
-    <div v-if="!joined"className="flex flex-col"> 
-    <div className="flex flex-col">
-    <input className="text-black" v-model="room"> </input> 
-    <button @click="joinLobby"> Join Lobby </button>
-    </div>
+    <div v-if="!joined"className="flex flex-col text-center justify-center"> 
     <div>
-    <button @click="createLobby"> Create Lobby </button>
+    <button v-if="!clickedJoin" @click="createLobby"> Create Lobby </button>
     <p> {{ room }}</p>
+    </div>
+    <div className="flex flex-col justify-center">
+    <button v-if="!clickedJoin" @click="clickedJoin = true"> Join Lobby </button>
+    <div v-if="clickedJoin" className="flex flex-row"> 
+    <input className="text-black" v-model="room"> </input> 
+    <button @click="joinLobby"> Submit </button>
+    </div>
     </div>
     </div>
     <div v-if="joined && !partyFull">
         <p> {{ room }}</p>
         <p> Waiting for players... </p>
     </div>
-    <div v-show="joined && partyFull" className="flex flex-row"> 
+    <div v-show="joined && partyFull" className="flex flex-col"> 
     <div v-show="joined && partyFull" id="game-container"></div>
     <div className="flex justify-center items-center">
         <div className="flex flex-col">
         <div>
-        <input className="text-black" v-model="text"> </input>
+        <input placeholder="Type word here" className="text-black" v-model="text"> </input>
         </div>
         </div>
     </div>

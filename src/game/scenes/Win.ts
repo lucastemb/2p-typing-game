@@ -13,11 +13,11 @@ export class Win extends Scene {
     create(){
         this.camera = this.cameras.main;
         this.camera.setBackgroundColor('00FF00');
-        this.add.text(550, 350, "Win", {
-            fontFamily: 'Arial Black', fontSize: 24, color: '#ffffff',
+        this.add.text(this.scale.width/2, this.scale.height/2, "Win", {
+            fontFamily: 'Avenir', fontSize: 24, color: '#ffffff',
             stroke: '#000000', strokeThickness: 4,
             align: 'center'
-        }).setOrigin(0.5).setDepth(100)
+        }).setOrigin(0.5, 0.5).setDepth(100)
 
         EventBus.emit('current-scene-ready', this);
     }
