@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -33,6 +34,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 		Name:    req.Name,
 		Clients: make(map[string]*Client),
 	}
+	fmt.Println("Room Created")
 	c.JSON(http.StatusOK, req)
 }
 
@@ -74,6 +76,8 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 		Alert:    "User just joined the room",
 	}
 
+	fmt.Printf("User %v joined room %v\n", clientID, roomID)
+
 	h.hub.Register <- cl
 	h.hub.Broadcast <- m
 
@@ -97,6 +101,7 @@ func (h *Handler) GetRooms(c *gin.Context) {
 		})
 	}
 
+	fmt.Println("Requesting Rooms")
 	c.JSON(http.StatusOK, rooms)
 }
 
@@ -121,5 +126,6 @@ func (h *Handler) GetClients(c *gin.Context) {
 		})
 	}
 
+	fmt.Println("Requesting Clients")
 	c.JSON(http.StatusOK, clients)
 }

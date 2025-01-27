@@ -25,20 +25,15 @@ export class Game extends Scene
     enemyLives: number | undefined = 3;
     hearts: Phaser.GameObjects.Image[] = [];
     displayClock: Phaser.GameObjects.Text;
-    elapsedSeconds: number = 0; 
+    elapsedSeconds: number = 0; //will keep track of seconds
     streak: Phaser.GameObjects.Text;
     background: Phaser.GameObjects.TileSprite;
     bgTexture: boolean = false; 
     changeTexture: number = 0;
+    longestScorestreak: number = 0; // will keep track of longest streak
+    totalCharactersTyped: number = 0;
+    totalWordCount: number = 0;
 
-
-
-    //one of the main issues is that the text will all fall down at the same time which makes it hard as the player to keep up with and they also all fall at the same time
-    //make it so the words fall in batches
-
-    //would it makes sense to use a queue? 
-
-    //three at a time will fall
     constructor ()
     {
         super('Game');
@@ -91,7 +86,7 @@ export class Game extends Scene
             repeat: -1
         })
 
-        this.newWordTimeGoal = Math.floor(Math.random() * 150 + 35)
+        this.newWordTimeGoal = Math.floor(Math.random() * 100 + 30)
         this.scoreboard = this.add.text(this.scale.width, 0, `Score: + ${this.score.toString()}`, {
             fontFamily: 'Pixelify', fontSize: 24, color: '#ffffff',
             stroke: '#000000', strokeThickness: 4,
@@ -120,7 +115,7 @@ export class Game extends Scene
         EventBus.on('words-list', (data: Set<string>) => {
             for(const word of data.values()){
                 if(!this.falling_words.has(word)){
-                    const textObject = this.add.text(-100, -100, 'loading...', {
+                    const textObject = this.add.text(-100, -100, 'Loading...', {
                         fontFamily: 'VCR_OSD', fontSize: 22, color: '#ffffff',
                         stroke: '#000000', strokeThickness: 4,
                         align: 'center'
@@ -146,17 +141,17 @@ export class Game extends Scene
             loop: true, 
         });
 
-        EventBus.on('word-complete', (word:string, percentage: string) => { //change to pass in word
-            if(this.scorestreak === 3){
-                // this.flame.visible = true;
-            }
+        EventBus.on('word-complete', (word:string, percentage: string, charactersTyped:number) => { //change to pass in word
             if (percentage === "1.00"){
                 this.scorestreak += 1;
             }
             else{
                 this.scorestreak = 0;
-                // this.flame.visible = false;
             }
+            this.totalCharactersTyped+=charactersTyped;
+            this.totalWordCount+=word.length;
+            this.longestScorestreak = Math.max(this.scorestreak, this.longestScorestreak);
+
             this.falling_words.get(word)?.destroy();
             this.falling_words.delete(word)
             //determines whether the word is ready to fall for bunching purposes
@@ -202,17 +197,17 @@ export class Game extends Scene
         }
         else {
             EventBus.emit('add-new-word', true);
-            const maxIterate = Math.min(this.fallOrder.length, 3)
+            const maxIterate = Math.min(this.fallOrder.length, 5)
             for(let i = 0; i < maxIterate; i++){
                 const temp_word = this.fallOrder.dequeue()
                 this.readyToFall.set(temp_word, true)
             }
-            this.newWordTimeGoal = Math.floor(Math.random() * 150 + 35)
+            this.newWordTimeGoal = Math.floor(Math.random() * 100 + 30)
             this.runningTimer = 0; 
         }
 
         this.falling_words.forEach((value, word)=> {
-            const fall_rate = Math.random() * 1.65
+            const fall_rate = Math.random() * (2+.05*(this.elapsedSeconds/20)+(.05*this.scorestreak))
             if(this.readyToFall.get(word)){
                 value.setPosition(value.x, value.y+fall_rate)
             }
@@ -234,6 +229,7 @@ export class Game extends Scene
                 incorrect.play()
             }
         })
+        
         EventBus.on('enemy-update',(data: EnemyPayload)=>{
             this.enemyLives = data.lives;
         })
@@ -244,10 +240,10 @@ export class Game extends Scene
     changeScene(){
         this.camera.fadeOut(500)
         if(this.lives <= 0){
-            this.scene.start('GameOver')   
+            this.scene.start('GameOver', {time: this.elapsedSeconds, longestStreak: this.longestScorestreak, points: this.score, wordChars: this.totalWordCount, totalChars: this.totalCharactersTyped})   
         }
         if(this.enemyLives <= 0){
-            this.scene.start('Win')
+            this.scene.start('Win', {time: this.elapsedSeconds, longestStreak: this.longestScorestreak, points: this.score, wordChars: this.totalWordCount, totalChars: this.totalCharactersTyped})
         }
     }
 }

@@ -4,7 +4,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { EventBus } from './EventBus';
 import StartGame from './main';
 import Phaser from 'phaser';
-import textFile from '../words_alpha.txt?raw';
+import textFile from '../words.txt?raw';
 import cryptoRandomString from 'crypto-random-string';
 import axios from 'axios';
 
@@ -18,7 +18,7 @@ type EnemyPayload = {
 // Save the current scene instance
 const scene = ref();
 const game = ref();
-const WORDS = ref<string[]>(textFile.split('\r\n'))
+const WORDS = ref<string[]>(textFile.split('\n'))
 const text = ref('')
 const words_final = ref<Set<string>>(new Set<string>());
 const charsTyped = ref<number>(0);
@@ -31,36 +31,42 @@ const enemyPayload = ref<EnemyPayload | null>(null);
 const joined = ref<boolean>(false);
 const partyFull = ref<boolean>(false);
 const clickedJoin = ref<boolean>(false);
+const animationIndex = ref<integer>(0);
+const animationFrames : string[] = [".", "..", "..."];
 
 const emit = defineEmits(['current-active-scene', 'words-list', 'word-complete', 'enemy-update', 'send-new-word']);
 
 
-const createLobby= () => {
+const createLobby = async () => {
         const str = cryptoRandomString({length: 6});
         room.value = str;
-        axios.post("http://localhost:9000/ws/createRoom", {
+        await axios.post("https://server-222814530816.us-east1.run.app/ws/createRoom", {
             "id": str,
             "name": str
+        }).catch(error => {
+            console.error("Unfortunately, there was an error. Please try again!", error);
+            return;
         })
 
         if(ws.value){
             ws.value.close()
+            console.log("Bruh")
         }
 
-        ws.value = new WebSocket(`ws://localhost:9000/ws/joinRoom/${room.value}?userId=${encodeURIComponent(user)}&username=${encodeURIComponent(user)}`)
+        ws.value = new WebSocket(`wss://server-222814530816.us-east1.run.app/ws/joinRoom/${room.value}?userId=${encodeURIComponent(user)}&username=${encodeURIComponent(user)}`)
 
         ws.value.onopen = () => {
             console.log(`Connected to room ${room.value} as ${user}`);
         };
 
-        ws.value.onclose = () => {
-            console.log('Connection closed')
+        ws.value.onclose = (event) => {
+            console.log('Connection closed', event.reason)
         }
 
         ws.value.onmessage = (event) => {
             const response = JSON.parse(event.data)
 
-            axios.get(`http://localhost:9000/ws/getClients/${room.value}`).then(response=>{
+            axios.get(`https://server-222814530816.us-east1.run.app/ws/getClients/${room.value}`).then(response=>{
         console.log("Length: ", response.data.length)
         if(response.data.length === 2){
             partyFull.value = true;
@@ -86,7 +92,7 @@ const joinLobby = () => {
         ws.value.close()
     }
 
-    ws.value = new WebSocket(`ws://localhost:9000/ws/joinRoom/${room.value}?userId=${encodeURIComponent(user)}&username=${encodeURIComponent(user)}`)
+    ws.value = new WebSocket(`wss://server-222814530816.us-east1.run.app/ws/joinRoom/${room.value}?userId=${encodeURIComponent(user)}&username=${encodeURIComponent(user)}`)
     ws.value.onopen = () => {
     console.log(`Connected to room ${room.value} as ${user}`);
     };
@@ -97,7 +103,7 @@ const joinLobby = () => {
 
     ws.value.onmessage = (event) => {
         const response = JSON.parse(event.data)
-        axios.get(`http://localhost:9000/ws/getClients/${room.value}`).then(response=>{
+        axios.get(`https://server-222814530816.us-east1.run.app/ws/getClients/${room.value}`).then(response=>{
         console.log("Length: ", response.data.length)
         if(response.data.length === 2){
             partyFull.value = true;
@@ -135,6 +141,10 @@ watch([joined, partyFull], async([newJoined, newPartyFull])=> {
     }
 })
 onMounted(() => {
+        setInterval(()=>{
+            animationIndex.value += 1;
+            animationIndex.value %= 3;
+        },500)
     if(joined.value && partyFull.value){
         game.value = StartGame('game-container');
     }
@@ -177,11 +187,11 @@ watch(text, async(newText, oldText)=> { //when word is typed out
             "scene": 1,
             "streak": streak.value
         }))
-
+        const charactersTyped = charsTyped.value;
         charsTyped.value = 0
         text.value = "";
         words_final.value.delete(newText);
-        EventBus.emit('word-complete', newText, percentage);
+        EventBus.emit('word-complete', newText, percentage, charactersTyped);
     }
 })
 
@@ -200,30 +210,29 @@ defineExpose({ scene, game });
 </script>
 
 <template>
+    <div className="flex items-center justify-center bg-[#FDF8E1] bg-custom-conic bg-120 w-full h-full">
+    <div v-if="!joined"className="flex flex-col text-center items-center justify-center"> 
     <div>
-    <div v-if="!joined"className="flex flex-col text-center justify-center"> 
-    <div>
-    <button v-if="!clickedJoin" @click="createLobby"> Create Lobby </button>
-    <p> {{ room }}</p>
+    <button className="font-vcrOSD text-5xl bg-[#e28c33] p-5 rounded-2xl m-1" v-if="!clickedJoin" @click="createLobby"> Create Lobby </button>
     </div>
     <div className="flex flex-col justify-center">
-    <button v-if="!clickedJoin" @click="clickedJoin = true"> Join Lobby </button>
-    <div v-if="clickedJoin" className="flex flex-row"> 
-    <input className="text-black" v-model="room"> </input> 
-    <button @click="joinLobby"> Submit </button>
+    <button className="font-vcrOSD text-5xl bg-[#767ae6] p-5 rounded-2xl m-1" v-if="!clickedJoin" @click="clickedJoin = true"> Join Lobby </button>
+    <div v-if="clickedJoin" className="flex flex-row items-center "> 
+    <input className="h-full text-black font-vcrOSD text-4xl border-2 m-4 w-3/4" v-model="room"> </input> 
+    <button className="bg-[#767ae6] rounded-2xl p-4 font-vcrOSD text-5xl" @click="joinLobby"> Submit </button>
     </div>
     </div>
     </div>
-    <div v-if="joined && !partyFull">
-        <p> {{ room }}</p>
-        <p> Waiting for players... </p>
+    <div className=" bg-[#767ae6] p-3 rounded-2xl font-vcrOSD text-6xl" v-if="joined && !partyFull">
+        <p> Room: {{ room }}</p>
+        <p> Waiting for players{{animationFrames[animationIndex]}}<span className="text-[#767ae6]">{{animationFrames[1].substring(0,2-animationIndex)}}</span> </p>
     </div>
-    <div v-show="joined && partyFull" className="flex flex-col"> 
+    <div v-show="joined && partyFull" className="flex flex-col border-[1px] pt-6 pb-3 pr-6 pl-6 border-black bg-[#FDF8E1]"> 
     <div v-show="joined && partyFull" id="game-container"></div>
     <div className="flex justify-center items-center">
         <div className="flex flex-col">
         <div>
-        <input placeholder="Type word here" className="text-black" v-model="text"> </input>
+        <input placeholder="Type word here" className="text-black font-vcrOSD text-2xl border-2" v-model="text"> </input>
         </div>
         </div>
     </div>
