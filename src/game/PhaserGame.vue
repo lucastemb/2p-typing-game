@@ -5,7 +5,7 @@ import { EventBus } from './EventBus';
 import StartGame from './main';
 import Phaser from 'phaser';
 import textFile from '../words.txt?raw';
-import cryptoRandomString from 'crypto-random-string';
+// import cryptoRandomString from 'crypto-random-string';
 import axios from 'axios';
 
 type EnemyPayload = {
