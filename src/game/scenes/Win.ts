@@ -1,7 +1,7 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 
-export class GameOver extends Scene {
+export class Win extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
     clock: number;
     longestStreak: number;
@@ -12,10 +12,9 @@ export class GameOver extends Scene {
     timer: number = 0;
     alternate: boolean = false;
 
-
     constructor() 
     {
-        super("GameOver")
+        super("Win")
     }
 
     init(data: any){
@@ -34,11 +33,11 @@ export class GameOver extends Scene {
 
     create(){
         this.camera = this.cameras.main;
-        this.camera.setBackgroundColor('f7ada7');
+        this.camera.setBackgroundColor('D7FFE9');
 
         this.background = this.add.tileSprite(0,0,1000,600,"background").setOrigin(0,0).setAlpha(0.30);
-        
-        const gameOver = this.add.text(this.scale.width/2, this.scale.height/2.5, "Game Over", {
+
+        const gameOver = this.add.text(this.scale.width/2, this.scale.height/2.5, "You Won!", {
             fontFamily: 'VCR_OSD', fontSize: 48, color: '#ffffff',
             stroke: '#000000', strokeThickness: 4,
             align: 'center'

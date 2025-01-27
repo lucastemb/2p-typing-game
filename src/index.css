@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer base {
+    @font-face {
+        font-family: "vcrOSD";
+        font-style: normal;
+        font-weight: 400;
+        src: url('../public/assets/fonts/vcr_osd.ttf') format('truetype');
+    }
+}
